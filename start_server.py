@@ -46,4 +46,4 @@ if __name__ == "__main__":
     create_superuser()
 
     # Ejecutar Gunicorn
-    run_command(f"gunicorn curseguridad.wsgi --bind 0.0.0.0:{port}")
+run_command(f"gunicorn curseguridad.wsgi:application --bind 0.0.0.0:{port}")
