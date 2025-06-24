@@ -121,11 +121,6 @@ def convert_pptx_to_pdf(pptx_path, pdf_path):
 
 @login_required
 def home(request):
-    print("Access Key:", settings.AWS_ACCESS_KEY_ID)
-    print("Secret Key:", settings.AWS_SECRET_ACCESS_KEY)
-    print("Bucket:", settings.AWS_STORAGE_BUCKET_NAME)
-    print("Región:", settings.AWS_S3_REGION_NAME)
-
     # Test de conexión a S3
     try:
         s3 = boto3.client(

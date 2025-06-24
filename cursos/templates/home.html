@@ -1,6 +1,12 @@
 {% extends 'base.html' %}
 {% load static %}
 
+<style>
+  body {
+    background-color: #0087FF;  /* Un azul claro, cambia a tu gusto */
+  }
+</style>
+
 {% block content %}
 {% if request.user.is_authenticated and request.user.is_superuser %}
 <h1>Sube una presentación de PowerPoint</h1>
