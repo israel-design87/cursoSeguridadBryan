@@ -163,10 +163,17 @@ def home(request):
         
         # Intenta guardar
             try:
+               file = request.FILES['pptx_file']
+               filename = default_storage.save(f'presentations/pptx/{file.name}', file)
+               print("📤 Subido a:", filename)
+               print("🌍 URL final:", default_storage.url(filename))
                presentation.save()
+               print("📄 Nombre del archivo:", presentation.pptx_file.name)
                print("✅ Archivo guardado en S3.")
                print("🌐 URL:", presentation.pptx_file.url)
                print("📁 Ruta interna:", presentation.pptx_file.name)
+               print("📦 Tamaño:", presentation.pptx_file.size)
+               print("📥 Almacenado en:", type(presentation.pptx_file.storage))
             except Exception as e:
                print("❌ Error al guardar:", e)
 
