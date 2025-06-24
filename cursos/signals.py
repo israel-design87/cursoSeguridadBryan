@@ -6,4 +6,5 @@ from .models import PerfilUsuario
 @receiver(post_save, sender=User)
 def crear_perfil_usuario(sender, instance, created, **kwargs):
     if created:
+        print(f"✅ Perfil creado para: {instance.username}")
         PerfilUsuario.objects.create(user=instance)

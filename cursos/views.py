@@ -257,11 +257,11 @@ def registro_exitoso(request):
 
     if username and password:
         try:
-            user = User.objects.create_user(
-                username=username, password=password)
+            # Crear el usuario (esto activa la señal y crea el perfil)
+            user = User.objects.create_user(username=username, password=password)
             login(request, user)
 
-            # Marca como pagado
+            # Obtener el perfil creado por la señal
             perfil = PerfilUsuario.objects.get(user=user)
             perfil.pagado = True
             perfil.save()
@@ -274,9 +274,19 @@ def registro_exitoso(request):
 
 
 def registro_cancelado(request):
-    # Limpiar sesión
-    request.session.pop('signup_username', None)
-    request.session.pop('signup_password', None)
+    username = request.session.pop('signup_username', None)
+    password = request.session.pop('signup_password', None)
+
+    if username and password:
+        try:
+            user = User.objects.create_user(username=username, password=password)
+
+            # Obtener el perfil creado por la señal
+            perfil = PerfilUsuario.objects.get(user=user)
+            perfil.pagado = False  # explícitamente
+            perfil.save()
+        except IntegrityError:
+            return redirect('/signup/?error=usuario_existente')
 
     return render(request, 'signup.html', {
         'form': FormularioRegistro(),

@@ -4,12 +4,12 @@
 {% block content %}
 <style>
    body {
-  background-image: url("{% static 'cursos_seguridad/img/fondo.jpg' %}");
-  background-size: 100% 140%; /* Aumenta el tamaño ancho 20% */
-  background-position: center 5%;
-  background-repeat: no-repeat;
-  font-family: 'Arial', sans-serif;
-}
+    background-image: url("{% static 'cursos_seguridad/img/fondo.jpg' %}");
+    background-size: 100% 140%; /* Aumenta el tamaño ancho 20% */
+    background-position: center 5%;
+    background-repeat: no-repeat;
+    font-family: 'Arial', sans-serif;
+  }
 
   .signup-container {
     max-width: 400px;
@@ -22,13 +22,27 @@
 
   .form-group {
     margin-bottom: 15px;
+    position: relative; /* necesario para posicionar el icono */
   }
 
   .field-error {
     color: #dc3545;
     font-size: 0.875em;
   }
+
+  .toggle-password {
+    position: absolute;
+    top: 38px; /* ajusta según el alto del input */
+    right: 10px;
+    cursor: pointer;
+    color: #666;
+    font-size: 1rem;
+    user-select: none;
+  }
 </style>
+
+<!-- FontAwesome para iconos -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-dUlfCpBoTjLK4v6mBlVj6EqxLbxM9fQVNndj9MRpJSxYuKkA0WHdV6zk1ceqlz1NLebZ+/8XnHkZ5AfN+yxZ9g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
 <div class="signup-container">
   <h1 class="text-center mb-4">Crear cuenta</h1>
@@ -55,6 +69,7 @@
     <div class="form-group">
       {{ form.password1.label_tag }}
       {{ form.password1 }}
+      <i class="fa-solid fa-eye toggle-password" toggle="#id_password1"></i>
       {% if form.password1.errors %}
         <div class="field-error">{{ form.password1.errors.0 }}</div>
       {% endif %}
@@ -63,6 +78,7 @@
     <div class="form-group">
       {{ form.password2.label_tag }}
       {{ form.password2 }}
+      <i class="fa-solid fa-eye toggle-password" toggle="#id_password2"></i>
       {% if form.password2.errors %}
         <div class="field-error">{{ form.password2.errors.0 }}</div>
       {% endif %}
@@ -71,4 +87,21 @@
     <button type="submit" class="btn btn-primary w-100 mt-3">Registrarse y pagar</button>
   </form>
 </div>
+
+<script>
+  document.querySelectorAll('.toggle-password').forEach(function(element) {
+    element.addEventListener('click', function() {
+      const input = document.querySelector(this.getAttribute('toggle'));
+      if (input.getAttribute('type') === 'password') {
+        input.setAttribute('type', 'text');
+        this.classList.remove('fa-eye');
+        this.classList.add('fa-eye-slash');
+      } else {
+        input.setAttribute('type', 'password');
+        this.classList.remove('fa-eye-slash');
+        this.classList.add('fa-eye');
+      }
+    });
+  });
+</script>
 {% endblock %}
