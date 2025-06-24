@@ -11,7 +11,7 @@ def run_command(command):
 
 def create_superuser():
     import django
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "cursosseguridad.settings")
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "curseguridad.settings")
     django.setup()
 
     from django.contrib.auth import get_user_model
