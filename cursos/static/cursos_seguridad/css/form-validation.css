@@ -1,0 +1,36 @@
+.form-group {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column; /* label arriba, input abajo */
+}
+.form-group label {
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+.form-group input {
+    padding: 8px;
+    font-size: 16px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    transition: border-color 0.3s ease;
+}
+.form-group input.valid {
+    border-color: green;
+}
+.form-group input.invalid {
+    border-color: red;
+}
+.field-error {
+    color: red;
+    font-size: 14px;
+    margin-top: 4px;
+    min-height: 18px;
+}
+.signup-container {
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 30px;
+    max-width: 400px;
+    margin: 60px auto;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}

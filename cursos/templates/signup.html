@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+  body {
+    background-image: url("{% static 'cursos_seguridad/img/fondo_registro.jpg' %}");
+    background-size: cover;
+    background-position: center;
+    font-family: 'Arial', sans-serif;
+  }
+
+  .signup-container {
+    max-width: 400px;
+    margin: 80px auto;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  }
+
+  .form-group {
+    margin-bottom: 15px;
+  }
+
+  .field-error {
+    color: #dc3545;
+    font-size: 0.875em;
+  }
+</style>
+
+<div class="signup-container">
+  <h1 class="text-center mb-4">Crear cuenta</h1>
+
+  {% if error %}
+    <div class="alert alert-danger text-center">{{ error }}</div>
+  {% endif %}
+
+  {% if request.GET.error == "pago_cancelado" %}
+    <div class="alert alert-danger text-center">El pago fue cancelado. Intenta nuevamente.</div>
+  {% endif %}
+
+  <form id="signupForm" action="{% url 'signup' %}" method="post" novalidate>
+    {% csrf_token %}
+
+    <div class="form-group">
+      {{ form.username.label_tag }}
+      {{ form.username }}
+      {% if form.username.errors %}
+        <div class="field-error">{{ form.username.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <div class="form-group">
+      {{ form.password1.label_tag }}
+      {{ form.password1 }}
+      {% if form.password1.errors %}
+        <div class="field-error">{{ form.password1.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <div class="form-group">
+      {{ form.password2.label_tag }}
+      {{ form.password2 }}
+      {% if form.password2.errors %}
+        <div class="field-error">{{ form.password2.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100 mt-3">Registrarse y pagar</button>
+  </form>
+</div>
+{% endblock %}

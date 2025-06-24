@@ -1,0 +1,36 @@
+# === Python ===
+*.py text eol=lf
+
+# === Templates ===
+*.html text eol=lf
+*.txt text eol=lf
+
+# === Static files ===
+*.css text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.xml text eol=lf
+*.svg text eol=lf
+
+# === Config files ===
+*.ini text eol=lf
+*.cfg text eol=lf
+*.env text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+
+# === Translation files ===
+*.po text eol=lf
+*.pot text eol=lf
+
+# Binarios, sin normalización
+*.mo -text
+
+# === Ignore migrations (optional) ===
+# You might want to use CRLF if you edit in Windows only
+#*.py text eol=crlf diff=python
+
+# === Set default behavior ===
+* text=auto
