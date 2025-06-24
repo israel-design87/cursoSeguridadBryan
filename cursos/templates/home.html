@@ -1,67 +1,63 @@
 {% extends 'base.html' %}
 {% load static %}
 
-<style>
-  body {
-    background-color: #0087FF;  /* Un azul claro, cambia a tu gusto */
-  }
-</style>
 
 {% block content %}
-{% if request.user.is_authenticated and request.user.is_superuser %}
-<h1>Sube una presentación de PowerPoint</h1>
+<div style="background-color: #0087FF; min-height: 100vh; padding: 1rem;">
+  {% if request.user.is_authenticated and request.user.is_superuser %}
+  <h1>Sube una presentación de PowerPoint</h1>
 
-<form method="post" enctype="multipart/form-data">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit" class="btn btn-primary">Subir Presentación</button>
-</form>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Subir Presentación</button>
+  </form>
 
-<hr>
-{% endif %}
+  <hr>
+  {% endif %}
 
-<h2>Presentaciones subidas</h2>
-{% if presentations %}
-<div class="table-responsive">
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>Título</th>
-        <th>Subido por</th>
-        <th>Fecha</th>
-        <th>Acciones</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for presentation in presentations %}
-      <tr>
-        <td>{{ presentation.title }}</td>
-        <td>{{ presentation.uploaded_by.username }}</td>
-        <td>{{ presentation.uploaded_at|date:"SHORT_DATE_FORMAT" }}</td>
-        <td>
-          {% if presentation.pptx_file %}
-          <a href="{{ presentation.pptx_file.url }}" class="btn btn-sm btn-info" download target="_blank">
-            Descargar PPTX
-          </a>
-          {% else %}
-          <span class="badge bg-warning">Archivo no disponible</span>
-          {% endif %}
+  <h2>Presentaciones subidas</h2>
+  {% if presentations %}
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Título</th>
+          <th>Subido por</th>
+          <th>Fecha</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for presentation in presentations %}
+        <tr>
+          <td>{{ presentation.title }}</td>
+          <td>{{ presentation.uploaded_by.username }}</td>
+          <td>{{ presentation.uploaded_at|date:"SHORT_DATE_FORMAT" }}</td>
+          <td>
+            {% if presentation.pptx_file %}
+            <a href="{{ presentation.pptx_file.url }}" class="btn btn-sm btn-info" download target="_blank">
+              Descargar PPTX
+            </a>
+            {% else %}
+            <span class="badge bg-warning">Archivo no disponible</span>
+            {% endif %}
 
-          <form method="post" action="{% url 'delete_presentation' presentation.id %}" style="display:inline;">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-sm btn-danger"
-              onclick="return confirm('¿Estás seguro de eliminar esta presentación?');">
-              Eliminar
-            </button>
-          </form>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+            <form method="post" action="{% url 'delete_presentation' presentation.id %}" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-danger"
+                onclick="return confirm('¿Estás seguro de eliminar esta presentación?');">
+                Eliminar
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p>No hay presentaciones subidas aún.</p>
+  {% endif %}
 </div>
-{% else %}
-<p>No hay presentaciones subidas aún.</p>
-{% endif %}
-
 {% endblock %}
