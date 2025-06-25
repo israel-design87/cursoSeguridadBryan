@@ -20,18 +20,26 @@ from cursos import views
 from django.conf import settings
 from django.conf.urls.static import static
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('home/', views.home, name='home'),
+
+    # Autenticación y pagos
     path('signup/', views.signup, name='signup'),
     path('logout/', views.signout, name='logout'),
-    path('', views.root_redirect, name='root'),  # raíz con lógica de redirección o render signin
+    path('', views.root_redirect, name='root'),
     path('signin/', views.signin, name='signin'),
-    path('presentation/delete/<int:presentation_id>/', views.delete_presentation, name='delete_presentation'),
-    path('checkout/', views.crear_checkout, name='crear_checkout'),
-    path('pago_exitoso/', views.pago_exitoso, name='pago_exitoso'),
-    path('pago_cancelado/', views.pago_cancelado, name='pago_cancelado'),
+    path('comprar_curso/<int:curso_id>/', views.crear_checkout_por_curso, name='crear_checkout_por_curso'),
+    path('pago_exitoso_curso/<int:curso_id>/', views.pago_exitoso_curso, name='pago_exitoso_curso'),
+    path('pago_cancelado_curso/<int:curso_id>/', views.pago_cancelado_curso, name='pago_cancelado_curso'),
     path('registro_exitoso/', views.registro_exitoso, name='registro_exitoso'),
     path('registro_cancelado/', views.registro_cancelado, name='registro_cancelado'),
-    path('inicio/', views.inicio, name='inicio'),
+
+    # CURSOS
+    path('cursos/upload/', views.subir_curso, name='subir_curso'),
+    path('cursos/<int:pk>/', views.detalle_curso, name='detalle_curso'),
+    path('archivo/eliminar/<int:archivo_id>/', views.eliminar_archivo, name='eliminar_archivo'),
+    path('curso/eliminar/<int:curso_id>/', views.eliminar_curso, name='eliminar_curso'),
+
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

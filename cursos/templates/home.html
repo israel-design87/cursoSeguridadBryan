@@ -1,54 +1,52 @@
 {% extends 'base.html' %}
 {% load static %}
 
-
 {% block content %}
-  {% if request.user.is_authenticated and request.user.is_superuser %}
-  <h1>Sube una presentación de PowerPoint</h1>
+<div class="container mt-4">
 
-  <form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">Subir Presentación</button>
-  </form>
-
-  <hr>
+  {% if messages %}
+  {% for message in messages %}
+  <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+  {% endfor %}
   {% endif %}
 
-  <h2>Presentaciones subidas</h2>
-  {% if presentations %}
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Cursos disponibles</h2>
+    {% if request.user.is_superuser %}
+    <a href="{% url 'subir_curso' %}" class="btn btn-success">
+      <i class="bi bi-plus-circle"></i> Subir nuevo curso
+    </a>
+    {% endif %}
+  </div>
+
+  {% if cursos %}
   <div class="table-responsive">
-    <table class="table table-striped">
-      <thead>
+    <table class="table table-hover align-middle">
+      <thead class="table-light">
         <tr>
           <th>Título</th>
-          <th>Subido por</th>
+          <th>Creado por</th>
           <th>Fecha</th>
+          <th>Precio</th>
           <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
-        {% for presentation in presentations %}
+        {% for curso in cursos %}
         <tr>
-          <td>{{ presentation.title }}</td>
-          <td>{{ presentation.uploaded_by.username }}</td>
-          <td>{{ presentation.uploaded_at|date:"SHORT_DATE_FORMAT" }}</td>
+          <td>{{ curso.titulo }}</td>
+          <td>{{ curso.creado_por.username }}</td>
+          <td>{{ curso.creado_en|date:"d M Y, H:i" }}</td>
+          <td>${{ curso.precio }}</td>
           <td>
-            {% if presentation.pptx_file %}
-            <a href="{{ presentation.pptx_file.url }}" class="btn btn-sm btn-info" download target="_blank">
-              Descargar PPTX
-            </a>
+            {% if curso.id in cursos_con_acceso or request.user.is_superuser %}
+            <a href="{% url 'detalle_curso' curso.id %}">Ver curso</a>
             {% else %}
-            <span class="badge bg-warning">Archivo no disponible</span>
+            <a href="{% url 'crear_checkout_por_curso' curso.id %}">Comprar curso</a>
             {% endif %}
-
-            <form method="post" action="{% url 'delete_presentation' presentation.id %}" style="display:inline;">
-              {% csrf_token %}
-              <button type="submit" class="btn btn-sm btn-danger"
-                onclick="return confirm('¿Estás seguro de eliminar esta presentación?');">
-                Eliminar
-              </button>
-            </form>
           </td>
         </tr>
         {% endfor %}
@@ -56,7 +54,8 @@
     </table>
   </div>
   {% else %}
-  <p>No hay presentaciones subidas aún.</p>
+  <p>No hay cursos disponibles aún.</p>
   {% endif %}
+
 </div>
 {% endblock %}

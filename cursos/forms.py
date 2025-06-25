@@ -1,29 +1,22 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Presentation
+from .models import Curso, ArchivoCurso
 
 class FormularioRegistro(UserCreationForm):
-
     username = forms.CharField(
         label="Nombre de usuario",
-        widget=forms.TextInput(attrs={
-            'placeholder': 'Nombre de usuario (máx 150 caracteres)'
-        })
+        widget=forms.TextInput(attrs={'placeholder': 'Nombre de usuario (máx 150 caracteres)'})
     )
     password1 = forms.CharField(
         label="Contraseña",
         strip=False,
-        widget=forms.PasswordInput(attrs={
-            'placeholder': 'Contraseña (mínimo 8 caracteres)'
-        }),
+        widget=forms.PasswordInput(attrs={'placeholder': 'Contraseña (mínimo 8 caracteres)'}),
     )
     password2 = forms.CharField(
         label="Confirmar contraseña",
         strip=False,
-        widget=forms.PasswordInput(attrs={
-            'placeholder': 'Repite tu contraseña'
-        }),
+        widget=forms.PasswordInput(attrs={'placeholder': 'Repite tu contraseña'}),
     )
 
     class Meta:
@@ -32,25 +25,40 @@ class FormularioRegistro(UserCreationForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Eliminamos el help_text para que no aparezca abajo
         for field in self.fields.values():
             field.help_text = ''
 
 
-            
-
-class PowerPointUploadForm(forms.ModelForm):
+# FORMULARIO PARA CURSOS
+class CursoForm(forms.ModelForm):
     class Meta:
-        model = Presentation
-        fields = ['title', 'pptx_file']
-    
-    def clean_pptx_file(self):
-        pptx_file = self.cleaned_data.get('pptx_file')
-        if not pptx_file:
+        model = Curso
+        fields = ['titulo', 'descripcion', 'precio']  # asegúrate de incluirlo
+
+
+
+# FORMULARIO PARA SUBIDA DE ARCHIVOS
+class ArchivoCursoForm(forms.ModelForm):
+    class Meta:
+        model = ArchivoCurso
+        fields = ['archivo']  # tipo se detecta automáticamente en el modelo
+
+    def clean_archivo(self):
+        archivo = self.cleaned_data.get('archivo')
+        if not archivo:
             raise forms.ValidationError("Debe seleccionar un archivo")
         
-        ext = pptx_file.name.split('.')[-1].lower()
-        if ext != 'pptx':
-            raise forms.ValidationError("Solo se permiten archivos .pptx")
+        ext = archivo.name.split('.')[-1].lower()
+        if ext not in ['pptx', 'pdf', 'docx']:
+            raise forms.ValidationError("Formato no permitido. Solo .pptx, .pdf, .docx")
         
-        return pptx_file
+        return archivo
+
+
+# FORMSET para múltiples archivos
+ArchivoCursoFormSet = forms.modelformset_factory(
+    ArchivoCurso,
+    form=ArchivoCursoForm,
+    extra=3,  # puedes cambiar a más formularios si lo deseas
+    can_delete=False
+)

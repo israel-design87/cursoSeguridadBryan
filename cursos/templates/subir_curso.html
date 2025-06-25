@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+  <h1>Subir nuevo curso</h1>
+
+  <form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+
+  {% for field in curso_form %}
+    <div class="mb-3">
+      {{ field.label_tag }}
+      {{ field }}
+      {% if field.errors %}
+        <div class="text-danger">{{ field.errors }}</div>
+      {% endif %}
+    </div>
+  {% endfor %}
+
+  <hr>
+
+  <h4>Subir archivos relacionados</h4>
+
+  {{ formset.management_form }}
+  {% for form in formset %}
+    <div class="mb-3">
+      {{ form.archivo.label_tag }} {{ form.archivo }}
+      {% if form.errors %}
+        <div class="text-danger">{{ form.errors.archivo }}</div>
+      {% endif %}
+    </div>
+  {% endfor %}
+
+  <button type="submit" class="btn btn-primary">
+    <i class="bi bi-upload"></i> Crear curso y subir archivos
+  </button>
+</form>
+
+  <a href="{% url 'home' %}" class="btn btn-secondary mt-3">Volver a la lista de cursos</a>
+</div>
+{% endblock %}

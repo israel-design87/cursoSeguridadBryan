@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load utils %}
+
+{% block content %}
+<style>
+  .container {
+    max-width: 900px;
+  }
+
+  h1 {
+    font-weight: 700;
+    color: #0d6efd; /* Azul bootstrap primario */
+  }
+
+  table.table {
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  table.table thead {
+    background-color: #0d6efd;
+    color: white;
+  }
+
+  table.table tbody tr:hover {
+    background-color: #e9f0ff;
+  }
+
+  a.btn-danger, button.btn-danger {
+    transition: background-color 0.3s ease;
+  }
+
+  a.btn-danger:hover, button.btn-danger:hover {
+    background-color: #b02a37;
+  }
+
+  form {
+    margin-top: 20px;
+  }
+
+  form button.btn-primary {
+    background-color: #198754;
+    border-color: #198754;
+  }
+
+  form button.btn-primary:hover {
+    background-color: #146c43;
+    border-color: #146c43;
+  }
+
+  /* Iconos bootstrap (bi) un poco más grandes y alineados */
+  i.bi {
+    margin-right: 5px;
+  }
+</style>
+<div class="container mt-4">
+  <h1>Detalles del curso: {{ curso.titulo }}</h1>
+  <p>{{ curso.descripcion }}</p>
+  <p><strong>Creado por:</strong> {{ curso.creado_por.username }} | <strong>Fecha:</strong> {{ curso.creado_en|date:"d M Y, H:i" }}</p>
+
+  <hr>
+
+  <h4>Archivos del curso</h4>
+
+  {% if archivos %}
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Archivo</th>
+          <th>Tipo</th>
+          <th>Subido en</th>
+          {% if request.user.is_superuser %}
+          <th>Acciones</th>
+          {% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for archivo in archivos %}
+        <tr>
+          <td>
+            <a href="{{ archivo.archivo.url }}" target="_blank" download>
+              {{ archivo.archivo.name|basename }}
+            </a>
+          </td>
+          <td>{{ archivo.get_tipo_display }}</td>
+          <td>{{ archivo.subido_en|date:"d M Y, H:i" }}</td>
+          {% if request.user.is_superuser %}
+          <td>
+            <form method="post" action="{% url 'eliminar_archivo' archivo.id %}" onsubmit="return confirm('¿Seguro que deseas eliminar este archivo?');">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-danger">
+                <i class="bi bi-trash"></i> Eliminar archivo
+              </button>
+            </form>
+          </td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No hay archivos para este curso.</p>
+  {% endif %}
+
+  {% if request.user.is_superuser %}
+  <hr>
+  <h4>Agregar más archivos</h4>
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ formset.management_form }}
+    {% for form in formset %}
+      <div class="mb-3">
+        {{ form.archivo.label_tag }} {{ form.archivo }}
+        {% if form.errors %}
+          <div class="text-danger">{{ form.errors.archivo }}</div>
+        {% endif %}
+      </div>
+    {% empty %}
+      <p>No hay campos disponibles para subir archivos.</p>
+    {% endfor %}
+    <button type="submit" class="btn btn-primary">
+      <i class="bi bi-upload"></i> Subir archivos
+    </button>
+  </form>
+
+  <hr>
+
+  <form method="post" action="{% url 'eliminar_curso' curso.id %}" onsubmit="return confirm('¿Seguro que deseas eliminar todo el curso? Se eliminarán todos sus archivos.');">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">
+      <i class="bi bi-trash"></i> Eliminar curso completo
+    </button>
+  </form>
+  {% endif %}
+
+  <a href="{% url 'home' %}" class="btn btn-secondary mt-3">Volver a la lista de cursos</a>
+</div>
+{% endblock %}

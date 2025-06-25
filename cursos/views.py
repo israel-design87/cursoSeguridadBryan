@@ -3,13 +3,11 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from django.contrib.auth import login, logout, authenticate
 from django.db import IntegrityError
-from django.contrib.auth.decorators import login_required
-from .forms import FormularioRegistro, PowerPointUploadForm
+from .forms import FormularioRegistro
 import os
 import stripe
 from django.conf import settings
-from .models import Presentation, PerfilUsuario
-from .forms import PowerPointUploadForm
+from .models import PerfilUsuario
 from io import BytesIO
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
@@ -22,6 +20,10 @@ import boto3
 from botocore.exceptions import ClientError
 from django.conf import settings
 from django.core.files.storage import default_storage
+from django.contrib.auth.decorators import login_required, user_passes_test
+from .models import Curso, ArchivoCurso
+from .forms import CursoForm, ArchivoCursoFormSet
+from .models import CursoComprado
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -39,35 +41,28 @@ def signup(request):
             username = form.cleaned_data['username']
             password = form.cleaned_data['password1']
 
-            # Guardar temporalmente en sesión
-            request.session['signup_username'] = username
-            request.session['signup_password'] = password
+            try:
+                # Crear usuario
+                user = User.objects.create_user(username=username, password=password)
+                user.save()
 
-            # Crear sesión de pago Stripe
-            session = stripe.checkout.Session.create(
-                payment_method_types=['card'],
-                line_items=[{
-                    'price_data': {
-                        'currency': 'mxn',
-                        'product_data': {
-                            'name': 'Registro y acceso al sistema',
-                        },
-                        'unit_amount': 5000,  # $50.00 MXN
-                    },
-                    'quantity': 1,
-                }],
-                mode='payment',
-                success_url=request.build_absolute_uri('/registro_exitoso/'),
-                cancel_url=request.build_absolute_uri('/registro_cancelado/'),
-                metadata={
-                    'username': username
-                }
-            )
-            return redirect(session.url, code=303)
+                # Autenticar usuario
+                user = authenticate(request, username=username, password=password)
+                if user is not None:
+                    login(request, user)  # Loguear usuario
+
+                return redirect('home')
+
+            except IntegrityError:
+                # Usuario ya existe
+                return render(request, 'signup.html', {
+                    'form': form,
+                    'error': 'El usuario ya existe.'
+                })
         else:
             return render(request, 'signup.html', {
                 'form': form,
-                "error": "Formulario inválido"
+                'error': 'Formulario inválido'
             })
 
 
@@ -118,10 +113,10 @@ def convert_pptx_to_pdf(pptx_path, pdf_path):
 
     c.save()
 
-
 @login_required
 def home(request):
-    # Test de conexión a S3
+    
+    # Debug conexión a S3 (opcional)
     try:
         s3 = boto3.client(
             's3',
@@ -130,76 +125,27 @@ def home(request):
             region_name=settings.AWS_S3_REGION_NAME,
         )
         response = s3.list_objects_v2(Bucket=settings.AWS_STORAGE_BUCKET_NAME)
-        print("✅ Conexión S3 exitosa. Objetos encontrados:",
-              response.get('KeyCount', 0))
+        print("✅ Conexión S3 exitosa. Objetos encontrados:", response.get('KeyCount', 0))
     except ClientError as e:
         print("❌ Error de conexión con S3:", e)
-
-        
 
     if hasattr(default_storage, 'bucket'):
         print("🔍 Archivos en S3 con prefijo 'media/':")
         for obj in default_storage.bucket.objects.filter(Prefix='media/'):
             print(" -", obj.key)
-    # Verifica si el usuario tiene un perfil y ha pagado
-    if not hasattr(request.user, 'perfilusuario') or not request.user.perfilusuario.pagado:
-        return redirect('crear_checkout')
 
-    # Manejo de formulario para subir presentación
-    if request.method == 'POST':
-        form = PowerPointUploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            presentation = form.save(commit=False)
-            presentation.uploaded_by = request.user
+    # Listar cursos ordenados más recientes
+    cursos = Curso.objects.all().order_by('-creado_en')
+    
+    cursos_con_acceso = set(
+        CursoComprado.objects.filter(usuario=request.user, pagado=True).values_list('curso_id', flat=True)
+    )
 
-            print("👉 DEFAULT_FILE_STORAGE en uso:", type(presentation.pptx_file.storage))
-            print("📄 Nombre archivo:", presentation.pptx_file.name)
-            print("📦 Archivo en memoria:", presentation.pptx_file.file)
-        
-        # Intenta guardar
-            try:
-               file = request.FILES['pptx_file']
-               filename = default_storage.save(f'presentations/pptx/{file.name}', file)
-               print("📤 Subido a:", filename)
-               print("🌍 URL final:", default_storage.url(filename))
-               presentation.save()
-               print("📄 Nombre del archivo:", presentation.pptx_file.name)
-               print("✅ Archivo guardado en S3.")
-               print("🌐 URL:", presentation.pptx_file.url)
-               print("📁 Ruta interna:", presentation.pptx_file.name)
-               print("📦 Tamaño:", presentation.pptx_file.size)
-               print("📥 Almacenado en:", type(presentation.pptx_file.storage))
-            except Exception as e:
-               print("❌ Error al guardar:", e)
-
-        return redirect('home')
-    else:
-        form = PowerPointUploadForm()
-
-    # Cargar presentaciones existentes (podrías filtrar por usuario si lo deseas)
-
-        presentations = Presentation.objects.all().order_by('-uploaded_at')
-
+    # Renderizar plantilla de cursos
     return render(request, 'home.html', {
-        'form': form,
-        'presentations': presentations
+        'cursos': cursos,
+        'cursos_con_acceso': cursos_con_acceso,
     })
-
-
-@login_required
-def delete_presentation(request, presentation_id):
-    presentation = get_object_or_404(Presentation, pk=presentation_id)
-
-    # Verificar que el usuario que intenta eliminar es el dueño
-    if presentation.uploaded_by != request.user:
-        return redirect('home')
-
-    if request.method == 'POST':
-        if presentation.pptx_file:
-            presentation.pptx_file.delete(save=False)
-        presentation.delete()
-        return redirect('home')
-
 
 def root_redirect(request):
     if request.user.is_authenticated:
@@ -211,44 +157,8 @@ def root_redirect(request):
 
 
 @login_required
-def crear_checkout(request):
-    session = stripe.checkout.Session.create(
-        payment_method_types=['card'],
-        line_items=[{
-            'price_data': {
-                'currency': 'mxn',
-                'product_data': {
-                    'name': 'Acceso al sistema',
-                },
-                'unit_amount': 5000,  # $50.00 MXN
-            },
-            'quantity': 1,
-        }],
-        mode='payment',
-        success_url='http://127.0.0.1:8000/pago_exitoso/',
-        cancel_url='http://127.0.0.1:8000/pago_cancelado/',
-        metadata={
-            'user_id': request.user.id,
-        }
-    )
-    return redirect(session.url, code=303)
-
-
-@login_required
-def pago_exitoso(request):
-    perfil = request.user.perfilusuario
-    perfil.pagado = True
-    perfil.save()
-    return redirect('home')
-
-
-@login_required
-def pago_cancelado(request):
-    return render(request, 'pago_cancelado.html')
-
-
-def inicio(request):
-    return render(request, 'inicio.html')
+def pago_cancelado_curso(request, curso_id):
+    return render(request, 'pago_cancelado.html', {'curso_id': curso_id})
 
 
 def registro_exitoso(request):
@@ -291,4 +201,129 @@ def registro_cancelado(request):
     return render(request, 'signup.html', {
         'form': FormularioRegistro(),
         'error': 'El pago fue cancelado o fallido. Intenta de nuevo.'
+    })
+
+def es_superusuario(user):
+    return user.is_superuser
+
+
+@login_required
+def subir_curso(request):
+    if request.method == 'POST':
+        curso_form = CursoForm(request.POST)
+        formset = ArchivoCursoFormSet(request.POST, request.FILES, queryset=ArchivoCurso.objects.none())
+        if curso_form.is_valid() and formset.is_valid():
+            curso = curso_form.save(commit=False)
+            curso.creado_por = request.user
+            curso.save()
+
+            for form in formset:
+                if form.cleaned_data:
+                    archivo = form.save(commit=False)
+                    archivo.curso = curso
+                    archivo.save()
+
+            return redirect('detalle_curso', pk=curso.id)
+    else:
+        curso_form = CursoForm()
+        formset = ArchivoCursoFormSet(queryset=ArchivoCurso.objects.none())
+
+    return render(request, 'subir_curso.html', {
+        'curso_form': curso_form,
+        'formset': formset,
+    })
+
+@user_passes_test(es_superusuario)
+def eliminar_archivo(request, archivo_id):
+    archivo = get_object_or_404(ArchivoCurso, id=archivo_id)
+    curso_id = archivo.curso.id
+    archivo.delete()
+    return redirect('detalle_curso', pk=curso_id)
+
+
+@user_passes_test(es_superusuario)
+def eliminar_curso(request, curso_id):
+    curso = get_object_or_404(Curso, id=curso_id)
+
+    # Ejecuta el delete personalizado de cada archivo
+    for archivo in curso.archivos.all():
+        archivo.delete()
+
+    # Luego elimina el curso
+    curso.delete()
+
+    return redirect('home')
+
+@login_required
+def crear_checkout_por_curso(request, curso_id):
+    curso = get_object_or_404(Curso, id=curso_id)
+
+    # Guardar en metadata para luego asociar
+    session = stripe.checkout.Session.create(
+        payment_method_types=['card'],
+        line_items=[{
+            'price_data': {
+                'currency': 'mxn',
+                'product_data': {
+                    'name': curso.titulo,
+                },
+                'unit_amount': int(curso.precio * 100),  # en centavos
+            },
+            'quantity': 1,
+        }],
+        mode='payment',
+        success_url=request.build_absolute_uri(f'/pago_exitoso_curso/{curso.id}/'),
+        cancel_url=request.build_absolute_uri(f'/pago_cancelado_curso/{curso.id}/'),
+        metadata={
+            'user_id': request.user.id,
+            'curso_id': curso.id,
+        }
+    )
+    return redirect(session.url, code=303)
+
+
+@login_required
+def pago_exitoso_curso(request, curso_id):
+    curso = get_object_or_404(Curso, id=curso_id)
+    obj, creado = CursoComprado.objects.get_or_create(
+        usuario=request.user,
+        curso=curso
+    )
+    obj.pagado = True
+    obj.save()
+    return redirect('detalle_curso', pk=curso.id)
+
+@login_required
+def detalle_curso(request, pk):
+    curso = get_object_or_404(Curso, pk=pk)
+
+    # Verificación de pago para usuarios normales
+    if not request.user.is_superuser:
+        try:
+            compra = CursoComprado.objects.get(usuario=request.user, curso=curso)
+            if not compra.pagado:
+                return redirect('crear_checkout_por_curso', curso_id=pk)
+        except CursoComprado.DoesNotExist:
+            return redirect('crear_checkout_por_curso', curso_id=pk)
+
+    # Mostrar archivos del curso
+    archivos = ArchivoCurso.objects.filter(curso=curso)
+
+    # Superusuario puede subir más archivos
+    if request.method == 'POST' and request.user.is_superuser:
+        formset = ArchivoCursoFormSet(request.POST, request.FILES, queryset=ArchivoCurso.objects.none())
+        if formset.is_valid():
+            for form in formset:
+                if form.cleaned_data:
+                    archivo = form.save(commit=False)
+                    archivo.curso = curso
+                    archivo.save()
+            return redirect('detalle_curso', pk=pk)
+    else:
+        formset = ArchivoCursoFormSet(queryset=ArchivoCurso.objects.none()) if request.user.is_superuser else None
+
+    return render(request, 'detalle_curso.html', {
+        'curso': curso,
+        'archivos': archivos,
+        'formset': formset,
     })
