@@ -3,169 +3,161 @@
 {% load utils %}
 
 {% block content %}
-<style>
-  .container {
-    max-width: 900px;
-  }
-
-  h1 {
-    font-weight: 700;
-    color: #0d6efd; /* Azul bootstrap primario */
-  }
-
-  table.table {
-    box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
-    border-radius: 8px;
-    overflow: hidden;
-  }
-
-  table.table thead {
-    background-color: #0d6efd;
-    color: white;
-  }
-
-  table.table tbody tr:hover {
-    background-color: #e9f0ff;
-  }
-
-  a.btn-danger, button.btn-danger {
-    transition: background-color 0.3s ease;
-  }
-
-  a.btn-danger:hover, button.btn-danger:hover {
-    background-color: #b02a37;
-  }
-
-  form {
-    margin-top: 20px;
-  }
-
-  form button.btn-primary {
-    background-color: #198754;
-    border-color: #198754;
-  }
-
-  form button.btn-primary:hover {
-    background-color: #146c43;
-    border-color: #146c43;
-  }
-
-  /* Iconos bootstrap (bi) un poco más grandes y alineados */
-  i.bi {
-    margin-right: 5px;
-  }
-
-  .text-danger {
-    font-size: 0.875rem;
-  }
-</style>
-
 <div class="container mt-4">
   <h1>Detalles del curso: {{ curso.titulo }}</h1>
   <p>{{ curso.descripcion }}</p>
-  <p><strong>Creado por:</strong> {{ curso.creado_por.username }} | <strong>Fecha:</strong> {{ curso.creado_en|date:"d M Y, H:i" }}</p>
+  <p><strong>Creado por:</strong> {{ curso.creado_por.username }} | 
+     <strong>Fecha:</strong> {{ curso.creado_en|date:"d M Y, H:i" }}</p>
 
   <hr>
 
-  <h4>Archivos del curso</h4>
+  {% if not request.user.is_superuser %}
+    {% if not progreso.video_visto_completo %}
+      <h4>Video del curso (debes verlo completo para continuar)</h4>
+      <video id="video_curso" width="640" height="360" controls>
+        <source src="{{ curso.video.url }}" type="video/mp4" />
+        Tu navegador no soporta el video.
+      </video>
+      <button id="btn_marcar_visto" class="btn btn-success mt-2" disabled>
+        Marcar video como visto completo
+      </button>
 
-  <p><strong>{{ archivos|length }} archivo{{ archivos|length|pluralize }}</strong> en este curso.</p>
+      <script>
+        const video = document.getElementById('video_curso');
+        const btn = document.getElementById('btn_marcar_visto');
 
-  {% if archivos %}
-    <table class="table table-striped align-middle">
-      <thead>
-        <tr>
-          <th>Archivo</th>
-          <th>Tipo</th>
-          <th>Subido en</th>
-          {% if request.user.is_superuser %}
-          <th>Acciones</th>
-          {% endif %}
-        </tr>
-      </thead>
-      <tbody>
-        {% for archivo in archivos %}
-        <tr>
-          <td>
-            <a href="{{ archivo.archivo.url }}" target="_blank" download rel="noopener noreferrer">
-              {{ archivo.archivo.name|basename }}
-            </a>
-          </td>
-          <td>{{ archivo.get_tipo_display }}</td>
-          <td>{{ archivo.subido_en|date:"d M Y, H:i" }}</td>
-          {% if request.user.is_superuser %}
-          <td>
-            <form method="post" action="{% url 'eliminar_archivo' archivo.id %}" onsubmit="return confirm('¿Seguro que deseas eliminar este archivo?');">
-              {% csrf_token %}
-              <button type="submit" class="btn btn-sm btn-danger">
-                <i class="bi bi-trash"></i> Eliminar archivo
-              </button>
-            </form>
-          </td>
-          {% endif %}
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% else %}
-    <p>No hay archivos para este curso.</p>
+        video.onended = () => {
+          btn.disabled = false;
+        };
+
+        btn.onclick = () => {
+          fetch("{% url 'marcar_video_completo' curso.id %}", {
+            method: 'POST',
+            headers: {
+              'X-CSRFToken': '{{ csrf_token }}',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({})
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.status === 'ok') {
+              alert('Video marcado como visto completo. Ahora podrás acceder al examen.');
+              location.reload();
+            } else {
+              alert('Error al marcar el video.');
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('Ocurrió un error de red.');
+          });
+        };
+      </script>
+
+    {% elif not progreso.examen_aprobado %}
+      <h4>Ya viste el video completo.</h4>
+      <a href="{% url 'examen_curso' curso.id %}" class="btn btn-primary">Ir al examen</a>
+
+    {% else %}
+      <h4>Has aprobado el examen. Accede a los archivos y tu certificado.</h4>
+    {% endif %}
+  {% endif %}
+
+  {% if request.user.is_superuser or progreso.examen_aprobado %}
+    <h4 class="mt-4">Archivos del curso</h4>
+
+    {% if archivos %}
+      <table class="table table-striped align-middle">
+        <thead>
+          <tr>
+            <th>Archivo</th>
+            <th>Tipo</th>
+            <th>Subido en</th>
+            {% if request.user.is_superuser %}
+              <th>Acciones</th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for archivo in archivos %}
+            <tr>
+              <td>
+                <a href="{{ archivo.archivo.url }}" target="_blank" download>
+                  {{ archivo.archivo.name|basename }}
+                </a>
+              </td>
+              <td>{{ archivo.get_tipo_display }}</td>
+              <td>{{ archivo.subido_en|date:"d M Y, H:i" }}</td>
+              {% if request.user.is_superuser %}
+                <td>
+                  <form method="post" action="{% url 'eliminar_archivo' archivo.id %}" onsubmit="return confirm('¿Seguro que deseas eliminar este archivo?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-danger">
+                      <i class="bi bi-trash"></i> Eliminar
+                    </button>
+                  </form>
+                </td>
+              {% endif %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>No hay archivos para este curso.</p>
+    {% endif %}
+
+    
   {% endif %}
 
   {% if request.user.is_superuser %}
-  <hr>
-  <h4>Agregar más archivos</h4>
+    <hr>
+    <h4>Agregar archivos al curso</h4>
 
-  <form method="post" enctype="multipart/form-data" id="upload-files-form">
-    {% csrf_token %}
-    {{ formset.management_form }}
-    {% for form in formset %}
-      <div class="mb-3">
-        {{ form.archivo.label_tag }} {{ form.archivo }}
-        {% if form.errors %}
-          {% if form.errors.archivo %}
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ formset.management_form }}
+      {% for form in formset %}
+        <div class="mb-3">
+          {{ form.archivo.label_tag }} {{ form.archivo }}
+          {% if form.errors %}
             <div class="text-danger">{{ form.errors.archivo }}</div>
           {% endif %}
-          {% if form.non_field_errors %}
-            <div class="text-danger">{{ form.non_field_errors }}</div>
-          {% endif %}
-        {% endif %}
-      </div>
-    {% empty %}
-      <p>No hay campos disponibles para subir archivos.</p>
-    {% endfor %}
-    <button type="submit" class="btn btn-primary">
-      <i class="bi bi-upload"></i> Subir archivos
-    </button>
-  </form>
+        </div>
+      {% empty %}
+        <p>No hay formularios disponibles.</p>
+      {% endfor %}
+      <button type="submit" class="btn btn-primary">
+        <i class="bi bi-upload"></i> Subir archivos
+      </button>
+    </form>
 
-  <hr>
+    <hr>
 
-  <form method="post" action="{% url 'eliminar_curso' curso.id %}" onsubmit="return confirm('¿Seguro que deseas eliminar todo el curso? Se eliminarán todos sus archivos.');">
-    {% csrf_token %}
-    <button type="submit" class="btn btn-danger mb-3">
-      <i class="bi bi-trash"></i> Eliminar curso completo
-    </button>
-  </form>
+    <a href="{% url 'agregar_pregunta' curso.id %}" class="btn btn-outline-primary mb-2">
+      <i class="bi bi-clipboard-plus"></i> Crear o editar examen
+    </a>
+    <a href="{% url 'listar_preguntas' curso.id %}" class="btn btn-outline-secondary mb-2">
+      <i class="bi bi-list-task"></i> Listar preguntas del examen
+    </a>
+
+    <hr>
+
+    <form method="post" action="{% url 'eliminar_curso' curso.id %}" onsubmit="return confirm('¿Seguro que deseas eliminar este curso y todos sus archivos?');">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">
+        <i class="bi bi-trash"></i> Eliminar curso completo
+      </button>
+    </form>
   {% endif %}
 
-  <a href="{% url 'home' %}" class="btn btn-secondary mt-3">Volver a la lista de cursos</a>
+  <div class="d-flex gap-2 mt-4">
+  {% if progreso.examen_aprobado %}
+    <a href="{% url 'certificado_reconocimiento' curso.id %}" class="btn btn-success">
+      <i class="bi bi-file-earmark-pdf"></i> Descargar Certificado
+    </a>
+  {% endif %}
+  <a href="{% url 'home' %}" class="btn btn-secondary">Volver a la lista de cursos</a>
 </div>
-
-<script>
-  // Evitar enviar formulario si no hay archivos seleccionados
-  document.getElementById('upload-files-form').addEventListener('submit', function(e) {
-    let inputs = this.querySelectorAll('input[type="file"]');
-    let filesSelected = false;
-    inputs.forEach(input => {
-      if (input.files.length > 0) {
-        filesSelected = true;
-      }
-    });
-    if (!filesSelected) {
-      e.preventDefault();
-      alert('Por favor, selecciona al menos un archivo para subir.');
-    }
-  });
-</script>
-
+</div>
 {% endblock %}

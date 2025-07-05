@@ -1,0 +1,53 @@
+/* static/css/curso.css */
+.container {
+  max-width: 900px;
+}
+
+h1 {
+  font-weight: 700;
+  color: #0d6efd; /* Azul bootstrap primario */
+}
+
+table.table {
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+table.table thead {
+  background-color: #0d6efd;
+  color: white;
+}
+
+table.table tbody tr:hover {
+  background-color: #e9f0ff;
+}
+
+a.btn-danger,
+button.btn-danger {
+  transition: background-color 0.3s ease;
+}
+
+a.btn-danger:hover,
+button.btn-danger:hover {
+  background-color: #b02a37;
+}
+
+form {
+  margin-top: 20px;
+}
+
+form button.btn-primary {
+  background-color: #198754;
+  border-color: #198754;
+}
+
+form button.btn-primary:hover {
+  background-color: #146c43;
+  border-color: #146c43;
+}
+
+/* Iconos bootstrap (bi) un poco más grandes y alineados */
+i.bi {
+  margin-right: 5px;
+}

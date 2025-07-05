@@ -33,13 +33,27 @@ urlpatterns = [
     path('comprar_curso/<int:curso_id>/', views.crear_checkout_por_curso, name='crear_checkout_por_curso'),
     path('pago_exitoso_curso/<int:curso_id>/', views.pago_exitoso_curso, name='pago_exitoso_curso'),
     path('pago_cancelado_curso/<int:curso_id>/', views.pago_cancelado_curso, name='pago_cancelado_curso'),
-    path('registro_exitoso/', views.registro_exitoso, name='registro_exitoso'),
-    path('registro_cancelado/', views.registro_cancelado, name='registro_cancelado'),
+    path('curso/<int:pk>/', views.detalle_curso, name='detalle_curso'),
+    path('curso/<int:curso_id>/examen/', views.examen_curso, name='examen_curso'),
+    path('curso/<int:curso_id>/marcar_video/', views.marcar_video_completo, name='marcar_video_completo'),
+    path('curso/<int:curso_id>/certificado/', views.certificado_reconocimiento, name='certificado_reconocimiento'),
+    path('curso/<int:curso_id>/configurar_examen/', views.crear_editar_examen, name='crear_editar_examen'),
+    path('curso/<int:curso_id>/agregar_pregunta/', views.agregar_pregunta, name='agregar_pregunta'),
+    path('curso/<int:curso_id>/configurar_examen/', views.configurar_examen, name='configurar_examen'),
+    path('usuarios-aprobados/', views.usuarios_aprobados_lista, name='usuarios_aprobados_lista'),
+
+
 
     # CURSOS
     path('cursos/upload/', views.subir_curso, name='subir_curso'),
     path('cursos/<int:pk>/', views.detalle_curso, name='detalle_curso'),
     path('archivo/eliminar/<int:archivo_id>/', views.eliminar_archivo, name='eliminar_archivo'),
     path('curso/eliminar/<int:curso_id>/', views.eliminar_curso, name='eliminar_curso'),
+
+
+    path('curso/<int:curso_id>/examen/preguntas/', views.listar_preguntas, name='listar_preguntas'),
+    path('curso/<int:curso_id>/examen/preguntas/agregar/', views.agregar_pregunta, name='agregar_pregunta'),
+    path('curso/<int:curso_id>/examen/preguntas/<int:pregunta_id>/editar/', views.editar_pregunta, name='editar_pregunta'),
+    path('examen/preguntas/<int:pregunta_id>/eliminar/', views.eliminar_pregunta, name='eliminar_pregunta'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2 class="mb-4">Usuarios que han aprobado cursos</h2>
+
+  {% if usuarios_aprobados %}
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th>Usuario</th>
+            <th>Nombre completo</th>
+            <th>CURP</th>
+            <th>Puesto</th>
+            <th>Ocupación específica</th>
+            <th>Empresa</th>
+            <th>RFC Empresa</th>
+            <th>Curso</th>
+            <th>Fecha aprobación</th>
+            <th>Puntaje (%)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in usuarios_aprobados %}
+            <tr>
+              <td>{{ item.usuario.username }}</td>
+              <td>{{ item.perfil.nombre }} {{ item.perfil.apellido_paterno }} {{ item.perfil.apellido_materno }}</td>
+              <td>{{ item.perfil.curp }}</td>
+              <td>{{ item.perfil.puesto }}</td>
+              <td>{{ item.perfil.ocupacion_especifica|default:"-" }}</td>
+              <td>{{ item.perfil.nombre_razon_social|default:"-" }}</td>
+              <td>{{ item.perfil.refc_empresa|default:"-" }}</td>
+              <td>{{ item.curso.titulo }}</td>
+              <td>{{ item.progreso.fecha_aprobacion|date:"d/m/Y H:i" }}</td>
+              <td>{{ item.progreso.porcentaje_examen|floatformat:2 }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="alert alert-warning text-center">
+      No hay usuarios que hayan aprobado ningún curso todavía.
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Examen: {{ curso.titulo }}</h2>
+  <form method="post">
+    {% csrf_token %}
+    {% for pregunta in preguntas %}
+      <div class="mb-4">
+        <strong>{{ forloop.counter }}. {{ pregunta.texto }}</strong>
+        {% for opcion in pregunta.opciones.all %}
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="pregunta_{{ pregunta.id }}" value="{{ opcion.id }}" id="opcion_{{ opcion.id }}">
+            <label class="form-check-label" for="opcion_{{ opcion.id }}">
+              {{ opcion.texto }}
+            </label>
+          </div>
+        {% empty %}
+          <p class="text-danger">Esta pregunta no tiene opciones.</p>
+        {% endfor %}
+      </div>
+    {% empty %}
+      <p>No hay preguntas en este examen.</p>
+    {% endfor %}
+    <button type="submit" class="btn btn-primary">Enviar examen</button>
+   <a href="{% url 'detalle_curso' pk=curso.id %}" class="btn btn-secondary">Volver al detalle del curso</a>
+  </form>
+</div>
+{% endblock %}

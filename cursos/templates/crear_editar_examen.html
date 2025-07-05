@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Configurar examen para {{ curso.titulo }}</h2>
+  <form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label for="tiempo_minutos" class="form-label">Duración del examen (minutos):</label>
+      <input type="number" name="tiempo_minutos" id="tiempo_minutos" class="form-control"
+             value="{{ examen.tiempo_minutos }}">
+    </div>
+    <button type="submit" class="btn btn-success">Guardar examen</button>
+  </form>
+  <a href="{% url 'detalle_curso' curso.id %}" class="btn btn-secondary mt-3">Volver</a>
+</div>
+
+
+{% endblock %}

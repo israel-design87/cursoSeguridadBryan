@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Editar pregunta</h2>
+    <a href="{% url 'listar_preguntas' curso.id %}" class="btn btn-secondary">Volver</a>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="mb-4">
+      {{ pregunta_form.as_p }}
+    </div>
+
+    <h4>Opciones de respuesta</h4>
+    {{ formset.management_form }}
+    {% for form in formset %}
+      <div class="border rounded p-3 mb-3">
+        {{ form.as_p }}
+        {% if form.instance.pk %}
+          <div class="form-check">
+            <label class="form-check-label">
+              {{ form.DELETE }} Eliminar esta opción
+            </label>
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+
+    <div class="d-flex justify-content-end mt-4">
+      <button type="submit" class="btn btn-success">Guardar cambios</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

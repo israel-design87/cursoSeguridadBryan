@@ -3,36 +3,32 @@
 
 {% block content %}
 <style>
-   body {
+  body {
     background-image: url("{% static 'cursos_seguridad/img/fondo.jpg' %}");
-    background-size: 100% 95%; /* Aumenta el tamaño ancho 20% */
+    background-size: 100% 200%;
     background-position: center 5%;
     background-repeat: no-repeat;
     font-family: 'Arial', sans-serif;
   }
-
   .signup-container {
     max-width: 400px;
     margin: 80px auto;
     background: rgba(255, 255, 255, 0.9);
     padding: 30px;
     border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
   }
-
   .form-group {
     margin-bottom: 15px;
-    position: relative; /* necesario para posicionar el icono */
+    position: relative;
   }
-
   .field-error {
     color: #dc3545;
     font-size: 0.875em;
   }
-
   .toggle-password {
     position: absolute;
-    top: 38px; /* ajusta según el alto del input */
+    top: 38px;
     right: 10px;
     cursor: pointer;
     color: #666;
@@ -41,7 +37,6 @@
   }
 </style>
 
-<!-- Agrega Font Awesome desde CDN -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" 
       integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" 
       crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -52,7 +47,6 @@
   {% if error %}
     <div class="alert alert-danger text-center">{{ error }}</div>
   {% endif %}
-
   {% if request.GET.error == "pago_cancelado" %}
     <div class="alert alert-danger text-center">El pago fue cancelado. Intenta nuevamente.</div>
   {% endif %}
@@ -65,6 +59,67 @@
       {{ form.username }}
       {% if form.username.errors %}
         <div class="field-error">{{ form.username.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <div class="form-group">
+      {{ form.nombre.label_tag }}
+      {{ form.nombre }}
+      {% if form.nombre.errors %}
+        <div class="field-error">{{ form.nombre.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <div class="form-group">
+      {{ form.apellido_paterno.label_tag }}
+      {{ form.apellido_paterno }}
+      {% if form.apellido_paterno.errors %}
+        <div class="field-error">{{ form.apellido_paterno.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <div class="form-group">
+      {{ form.apellido_materno.label_tag }}
+      {{ form.apellido_materno }}
+      {% if form.apellido_materno.errors %}
+        <div class="field-error">{{ form.apellido_materno.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <div class="form-group">
+      {{ form.curp.label_tag }}
+      {{ form.curp }}
+      {% if form.curp.errors %}
+        <div class="field-error">{{ form.curp.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <div class="form-group">
+      {{ form.puesto.label_tag }}
+      {{ form.puesto }}
+      {% if form.puesto.errors %}
+        <div class="field-error">{{ form.puesto.errors.0 }}</div>
+      {% endif %}
+    </div>
+    <div class="form-group">
+      {{ form.ocupacion_especifica.label_tag }}
+      {{ form.ocupacion_especifica }}
+      {% if form.ocupacion_especifica.errors %}
+        <div class="field-error">{{ form.ocupacion_especifica.errors.0 }}</div>
+      {% endif %}
+    </div>
+    <div class="form-group">
+      {{ form.nombre_razon_social.label_tag }}
+      {{ form.nombre_razon_social }}
+      {% if form.nombre_razon_social.errors %}
+        <div class="field-error">{{ form.nombre_razon_social.errors.0 }}</div>
+      {% endif %}
+    </div>
+    <div class="form-group">
+      {{ form.refc_empresa.label_tag }}
+      {{ form.refc_empresa }}
+      {% if form.refc_empresa.errors %}
+        <div class="field-error">{{ form.refc_empresa.errors.0 }}</div>
       {% endif %}
     </div>
 
